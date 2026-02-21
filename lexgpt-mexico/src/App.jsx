@@ -304,18 +304,24 @@ export default function App() {
     setError("");
     const userMessage = `Estado: ${estado || "No especificado"}\nCategoría: ${categoria || "General"}\n\nConsulta: ${consulta}`;
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: SYSTEM_PROMPT,
-          messages: [{ role: "user", content: userMessage }]
+          model: "llama-3.3-70b-versatile",
+          max_tokens: 1500,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: userMessage }
+          ]
         })
       });
       const data = await response.json();
-      const text = data.content?.map(b => b.text || "").join("") || "";
+      const text = data.choices?.[0]?.message?.content || "";
       const clean = text.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(clean);
       setResult(parsed);
